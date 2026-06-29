@@ -17,3 +17,5 @@ The `HexRowReduce` library exposes the executable row-reduction stack over the
 contracts (`RowEchelon`), and the executable RREF loop with its pivot/free-column
 partition and span/nullspace APIs (`RREF`). This module re-exports them.
 -/
+
+-- PAT write-path test marker (reverted by sync)
