@@ -217,8 +217,7 @@ private theorem foldl_indicator_mul_unique {R : Type u} [Lean.Grind.Ring R]
           have hxy : x ≠ y := fun heq => (List.nodup_cons.mp hnodup).1 (heq ▸ hy)
           rw [if_neg hxy]
           grind
-        rw [if_pos rfl]
-        rw [foldl_add_eq_acc_ring xs _ _ hxs_zero]
+        rw [if_pos rfl, foldl_add_eq_acc_ring xs _ _ hxs_zero]
         grind
       · have hxi : i ≠ x := by
           intro heq
@@ -228,8 +227,7 @@ private theorem foldl_indicator_mul_unique {R : Type u} [Lean.Grind.Ring R]
         have hzero : (0 : R) * f x = 0 := by grind
         rw [hzero]
         have hacc : acc + (0 : R) = acc := by grind
-        rw [hacc]
-        rw [ih hitail (List.nodup_cons.mp hnodup).2 acc]
+        rw [hacc, ih hitail (List.nodup_cons.mp hnodup).2 acc]
 
 /-- A row-combination vector with a single coefficient `1` at row `i`
 and zero elsewhere selects exactly row `i` of the matrix. This packages
@@ -247,14 +245,14 @@ theorem rowCombination_single {R : Type u} [Lean.Grind.CommRing R]
   change (Matrix.mulVec (Matrix.transpose M)
       (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0))[jf] =
     (row M i)[jf]
-  unfold Matrix.mulVec Matrix.row Hex.Vector.dotProduct Matrix.transpose
+  unfold Matrix.mulVec Matrix.row Vector.dotProduct Matrix.transpose
     Matrix.col
   change (Vector.ofFn fun j : Fin m =>
       (List.finRange n).foldl
         (fun acc l => acc + (Vector.ofFn fun j : Fin m => Vector.ofFn fun i : Fin n => M[i][j])[j][l] *
-          (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0)[l]) 0).get jf =
+          (Vector.ofFn fun l : Fin n => if i = l then (1 : R) else 0)[l]) 0)[jf.1] =
     M[i][jf]
-  rw [Vector.get_ofFn]
+  rw [Vector.getElem_ofFn]
   change
     (List.finRange n).foldl
         (fun acc l => acc +
@@ -329,7 +327,7 @@ private theorem rowCombination_pivotCoeff [Lean.Grind.Field R] (E : IsRREF M D)
     (rowCombination D.echelon c)[D.pivotCols.get p] =
       c[E.toIsEchelonForm.pivotRow p] := by
   unfold rowCombination
-  simp [HMul.hMul, Matrix.mulVec, Matrix.row, Hex.Vector.dotProduct,
+  simp [HMul.hMul, Matrix.mulVec, Matrix.row, Vector.dotProduct,
     Matrix.transpose, Matrix.col]
   change (List.finRange n).foldl
       (fun acc i => acc + D.echelon[i][D.pivotCols.get p] * c[i]) 0 =
@@ -363,7 +361,7 @@ private theorem rowCombination_eq_of_coeffs_eq_on_rank [Lean.Grind.Field R]
   ext j hj
   let jj : Fin m := ⟨j, hj⟩
   unfold rowCombination
-  simp [HMul.hMul, Matrix.mulVec, Matrix.row, Hex.Vector.dotProduct,
+  simp [HMul.hMul, Matrix.mulVec, Matrix.row, Vector.dotProduct,
     Matrix.transpose, Matrix.col]
   change (List.finRange n).foldl
       (fun acc i => acc + D.echelon[i][jj] * c[i]) 0 =
@@ -582,7 +580,7 @@ private theorem nullspace_get [Lean.Grind.Ring R] (E : IsRREF M D)
     (k : Fin (m - D.rank)) :
     E.nullspace.get k = Matrix.col E.nullspaceMatrix k := by
   unfold nullspace
-  rw [Vector.get_ofFn]
+  exact Vector.getElem_ofFn _
 
 /-- On its own free column, a nullspace basis vector has entry `1`. -/
 @[grind =] theorem nullspace_get_free [Lean.Grind.Ring R] (E : IsRREF M D)
@@ -635,8 +633,7 @@ private theorem foldl_sum_start {R : Type u} [Lean.Grind.Ring R]
       grind
   | cons x xs ih =>
       simp only [List.foldl_cons]
-      rw [ih (acc := acc + f x)]
-      rw [ih (acc := (0 : R) + f x)]
+      rw [ih (acc := acc + f x), ih (acc := (0 : R) + f x)]
       grind
 
 omit [Mul R] [Add R] [OfNat R 0] [OfNat R 1] in
@@ -661,8 +658,7 @@ private theorem foldl_one_nonzero {R : Type u} [Lean.Grind.Ring R]
             exact (List.nodup_cons.mp hnodup).1 hy
           exact hz y (List.mem_cons_of_mem _ hy) hya
         have h0x : (0 : R) + x = x := by grind
-        rw [h0x]
-        rw [foldl_add_eq_acc_ring_echelon zs f x hzero]
+        rw [h0x, foldl_add_eq_acc_ring_echelon zs f x hzero]
       · have hz0 : f z = 0 := hz z (by simp) hza
         rw [hz0]
         have haTail : a ∈ zs := by
@@ -705,9 +701,7 @@ private theorem foldl_two_nonzero {R : Type u} [Lean.Grind.Ring R]
             exact (List.nodup_cons.mp hnodup).1 ht
           exact hz t (List.mem_cons_of_mem _ ht) hta htb
         have h0x : (0 : R) + x = x := by grind
-        rw [h0x]
-        rw [foldl_sum_start zs f x]
-        rw [foldl_one_nonzero zs b f y hbTail hnodupTail hb hbOnly]
+        rw [h0x, foldl_sum_start zs f x, foldl_one_nonzero zs b f y hbTail hnodupTail hb hbOnly]
       · by_cases hzb : z = b
         · subst z
           rw [hb]
@@ -724,9 +718,7 @@ private theorem foldl_two_nonzero {R : Type u} [Lean.Grind.Ring R]
               exact (List.nodup_cons.mp hnodup).1 ht
             exact hz t (List.mem_cons_of_mem _ ht) hta htb
           have h0y : (0 : R) + y = y := by grind
-          rw [h0y]
-          rw [foldl_sum_start zs f y]
-          rw [foldl_one_nonzero zs a f x haTail hnodupTail ha haOnly]
+          rw [h0y, foldl_sum_start zs f y, foldl_one_nonzero zs a f x haTail hnodupTail ha haOnly]
           grind
         · have hz0 : f z = 0 := hz z (by simp) hza hzb
           rw [hz0]
@@ -764,9 +756,8 @@ private theorem nullspace_echelon_sound {R : Type u} [Lean.Grind.Ring R] {n m : 
     have hpivotFree : pivot ≠ free := by
       exact E.toIsEchelonForm.pivotCols_disjoint_freeCols ri k
     change (Matrix.mulVec D.echelon (E.nullspace.get k))[r] = (0 : Vector R n)[r]
-    unfold Matrix.mulVec Matrix.row Hex.Vector.dotProduct
-    rw [Vector.getElem_ofFn hr]
-    rw [Vector.getElem_zero r hr]
+    unfold Matrix.mulVec Matrix.row Vector.dotProduct
+    rw [Vector.getElem_ofFn hr, Vector.getElem_zero r hr]
     change (List.finRange m).foldl
         (fun acc j => acc + D.echelon[row][j] * (E.nullspace.get k)[j]) 0 = 0
     have hpivotTerm :
@@ -833,9 +824,8 @@ private theorem nullspace_echelon_sound {R : Type u} [Lean.Grind.Ring R] {n m : 
   · have hzeroRow := E.toIsEchelonForm.zero_row row (by
       exact Nat.le_of_not_gt hrow)
     change (Matrix.mulVec D.echelon (E.nullspace.get k))[r] = (0 : Vector R n)[r]
-    unfold Matrix.mulVec Matrix.row Hex.Vector.dotProduct
-    rw [Vector.getElem_ofFn hr]
-    rw [Vector.getElem_zero r hr]
+    unfold Matrix.mulVec Matrix.row Vector.dotProduct
+    rw [Vector.getElem_ofFn hr, Vector.getElem_zero r hr]
     change (List.finRange m).foldl
         (fun acc j => acc + D.echelon[row][j] * (E.nullspace.get k)[j]) 0 = 0
     have hzero :
@@ -919,8 +909,7 @@ private theorem pivotCols_toList_nodup
     {M : Matrix R n m} {D : RowEchelonData R n m}
     (E : IsEchelonForm M D) :
     D.pivotCols.toList.Nodup := by
-  rw [List.nodup_iff_pairwise_ne]
-  rw [List.pairwise_iff_getElem]
+  rw [List.nodup_iff_pairwise_ne, List.pairwise_iff_getElem]
   intro i j hi hj hij
   have hi' : i < D.rank := by simpa [Vector.length_toList] using hi
   have hj' : j < D.rank := by simpa [Vector.length_toList] using hj
@@ -985,9 +974,7 @@ private theorem pivot_column_entry_pivotRow {R : Type u} [Lean.Grind.Field R]
   have h := pivot_column_entry E i' (E.toIsEchelonForm.pivotRow i)
   by_cases hii : i' = i
   · subst i'
-    rw [if_pos rfl]
-    rw [h]
-    rw [if_pos rfl]
+    rw [if_pos rfl, h, if_pos rfl]
   · rw [if_neg hii]
     rw [h]
     have hrow_ne : E.toIsEchelonForm.pivotRow i' ≠ E.toIsEchelonForm.pivotRow i := by
@@ -1024,7 +1011,7 @@ private theorem freeSum_eq_neg_pivot {R : Type u} [Lean.Grind.Field R] {n m : Na
         (E.toIsEchelonForm.pivotRow i).isLt =
       (0 : Vector R n)[(E.toIsEchelonForm.pivotRow i).val]'
         (E.toIsEchelonForm.pivotRow i).isLt at hentry
-    unfold Matrix.mulVec Matrix.row Hex.Vector.dotProduct at hentry
+    unfold Matrix.mulVec Matrix.row Vector.dotProduct at hentry
     rw [Vector.getElem_ofFn (E.toIsEchelonForm.pivotRow i).isLt] at hentry
     rw [Vector.getElem_zero (E.toIsEchelonForm.pivotRow i).val
       (E.toIsEchelonForm.pivotRow i).isLt] at hentry
@@ -1136,7 +1123,7 @@ theorem nullspace_complete {R : Type u} [Lean.Grind.Field R] {n m : Nat}
       (Matrix.mulVec E.nullspaceMatrix
         (Vector.ofFn (fun k => v[E.toIsEchelonForm.freeCols.get k]) :
           Vector R (m - D.rank)))[jj.val]'jj.isLt = v[jj.val]'jj.isLt
-    unfold Matrix.mulVec Matrix.row Hex.Vector.dotProduct
+    unfold Matrix.mulVec Matrix.row Vector.dotProduct
     rw [Vector.getElem_ofFn jj.isLt]
     change
       (List.finRange (m - D.rank)).foldl
