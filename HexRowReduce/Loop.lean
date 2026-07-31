@@ -474,6 +474,7 @@ private theorem eliminateColumn_other_column
     (hpivot : M[pivotRow][k] = 0) (r : Fin n) :
     (eliminateColumn M T pivotRow col).1[r][k] = M[r][k] := by
   unfold eliminateColumn
+  simp only [getElem_pair_eq_nested]
   exact eliminateColumn_foldl_other_column pivotRow col k (List.finRange n) (M, T) r hpivot
 
 /-- Proof-only invariant tracking the no-pivot branch of `rowReduceLoop`: every
@@ -848,7 +849,8 @@ private theorem rowReduce_transform_right_inverse (M : Matrix R n m) :
     { row := 0, echelon := M, transform := Matrix.identity n, pivots := [] }
     ⟨Matrix.identity n, by rw [identity_mul]⟩
 
-/-- Wrapper-level projection of the transform equation from `rowReduce_isRowReduced M`. -/
+/-- The transform returned by {name}`Hex.Matrix.rowReduce` maps the input matrix
+to its echelon form. -/
 theorem rowReduce_transform_mul (M : Matrix R n m) :
     (rowReduce M).transform * M = (rowReduce M).echelon := by
   unfold rowReduce
@@ -859,7 +861,8 @@ theorem rowReduce_transform_mul (M : Matrix R n m) :
       pivots := [] }
     (by rw [Matrix.identity_mul])
 
-/-- The computed `rowReduce` data satisfies the `IsRowReduced` contract. -/
+/-- The data computed by {name}`Hex.Matrix.rowReduce` satisfies the
+{name}`Hex.Matrix.IsRowReduced` contract. -/
 theorem rowReduce_isRowReduced (M : Matrix R n m) : IsRowReduced M (rowReduce M) := by
   let final := rowReduceLoop 0 m
     { row := 0, echelon := M, transform := Matrix.identity n, pivots := [] }
